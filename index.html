@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Quiz Cadena de Frío — Grupo Afín</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{
+  --navy:#1a3369;--navy2:#243e80;--navy3:#0d1f45;
+  --orange:#E07820;--bg:#f0f4fb;--surface:#fff;
+  --text:#1a2340;--muted:#5a6480;--border:#cdd5e8;
+  --green:#1a7a4a;--gbg:#e6f5ed;
+  --red:#b32220;--rbg:#fce8e8;
+  color-scheme:light;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0e1520;--surface:#18243a;--text:#e4eaf8;--muted:#7a8aaa;--border:#263050;
+  --gbg:#0b2318;--rbg:#280d0d;color-scheme:dark;
+}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+body{padding:0 max(16px,env(safe-area-inset-left,0px)) 60px}
+
+#hdr{background:var(--navy3);padding:14px max(20px,env(safe-area-inset-left,0px));border-bottom:3px solid var(--orange);margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px)));display:flex;align-items:center;gap:10px;margin-bottom:20px}
+#hdr h1{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#fff}
+#hdr p{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
+
+.page{display:none;max-width:540px;margin:0 auto}
+.page.on{display:block}
+
+#pg-cover{text-align:center;padding-top:20px}
+.cv-badge{background:var(--navy);color:#fff;border-radius:100px;padding:5px 16px;font-size:11px;font-weight:700;display:inline-block;margin-bottom:18px}
+#pg-cover h2{font-family:'Montserrat',sans-serif;font-size:28px;font-weight:900;color:var(--navy);line-height:1.2;margin-bottom:8px}
+#pg-cover p{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:16px;text-align:left}
+.form-card h3{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px}
+.fl{display:flex;flex-direction:column;gap:12px}
+.fl label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;display:block}
+.fl input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+.fl input:focus{border-color:var(--navy)}
+.fl input.err{border-color:var(--red)}
+.errmsg{font-size:11px;color:var(--red);margin-top:3px;display:none}
+.errmsg.on{display:block}
+.btn-main{width:100%;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;transition:background .2s}
+.btn-main:hover{background:var(--navy2)}
+.btn-main:disabled{background:var(--border);color:var(--muted);cursor:not-allowed}
+.btn-main.orange{background:var(--orange)}
+.note{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5}
+
+#pg-quiz{padding-top:4px}
+.qprog-bar{height:4px;background:var(--border);border-radius:4px;margin-bottom:20px;overflow:hidden}
+.qprog-fill{height:100%;background:var(--orange);transition:width .3s;border-radius:4px}
+.qnum{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.qtext{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;color:var(--navy);line-height:1.4;margin-bottom:18px}
+.opts{display:flex;flex-direction:column;gap:9px;margin-bottom:18px}
+.ob{border:2px solid var(--border);background:var(--surface);border-radius:10px;padding:12px 15px;text-align:left;font-size:13.5px;cursor:pointer;font-family:'Inter',sans-serif;color:var(--text);transition:all .2s;line-height:1.4;width:100%}
+.ob:hover:not(:disabled){border-color:var(--navy);background:var(--bg)}
+.ob.ok{border-color:var(--green)!important;background:var(--gbg)!important;color:var(--green)!important;font-weight:600}
+.ob.ko{border-color:var(--red)!important;background:var(--rbg)!important;color:var(--red)!important}
+.ob.reveal{border-color:var(--green);background:var(--gbg);color:var(--green);font-weight:600}
+.expl{font-size:12.5px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 13px;margin-bottom:14px;line-height:1.6;display:none}
+.expl.on{display:block}
+.nav-row{display:flex;justify-content:flex-end}
+
+#pg-result{text-align:center;padding-top:20px}
+.score-ring{width:130px;height:130px;border-radius:50%;margin:0 auto 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;border:6px solid var(--navy)}
+.score-ring .val{font-size:40px;font-weight:900;color:var(--navy);line-height:1}
+.score-ring .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+#pg-result h2{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:900;color:var(--navy);margin-bottom:8px}
+#pg-result .msg{font-size:14px;color:var(--muted);max-width:340px;margin:0 auto 20px;line-height:1.65}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px;text-align:left}
+.result-card h4{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+.result-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px}
+.result-row:last-child{border:none}
+.tag-ok{background:var(--gbg);color:var(--green);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:700}
+.tag-ko{background:var(--rbg);color:var(--red);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:700}
+#save-status{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;min-height:18px}
+.copy-btn{background:none;border:1.5px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 18px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;margin-top:8px}
+.copy-btn:hover{border-color:var(--navy);color:var(--navy)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <div>
+    <h1>Evaluación de Cadena de Frío</h1>
+    <p>Grupo Afín Farmacéutica SAS BIC · Personal de Embalaje</p>
+  </div>
+</header>
+
+<!-- PORTADA -->
+<div class="page on" id="pg-cover">
+  <div class="cv-badge">🌡️ Evaluación Técnica — Cadena de Frío</div>
+  <h2>Quiz de Verificación<br>de Conocimientos</h2>
+  <p>15 preguntas sobre rangos de temperatura, configuración de embalajes, Tive Tag y manejo de desviaciones. Tiempo estimado: 8 minutos.</p>
+  <div class="form-card">
+    <h3>Antes de empezar, ingresa tus datos</h3>
+    <div class="fl">
+      <div>
+        <label for="inp-name">Nombre completo</label>
+        <input type="text" id="inp-name" placeholder="Tu nombre y apellido" autocomplete="name">
+        <span class="errmsg" id="err-name">Por favor ingresa tu nombre completo</span>
+      </div>
+      <div>
+        <label for="inp-cc">Cédula de ciudadanía</label>
+        <input type="text" id="inp-cc" placeholder="Número de cédula" inputmode="numeric" autocomplete="off">
+        <span class="errmsg" id="err-cc">Ingresa un número de cédula válido (mín. 6 dígitos)</span>
+      </div>
+    </div>
+  </div>
+  <button class="btn-main" id="btn-start" onclick="startQuiz()">Comenzar Evaluación →</button>
+  <p class="note">Los resultados se enviarán automáticamente al área de Calidad y Capacitación.</p>
+</div>
+
+<!-- QUIZ -->
+<div class="page" id="pg-quiz">
+  <div class="qprog-bar"><div class="qprog-fill" id="qfill" style="width:0%"></div></div>
+  <div class="qnum" id="qnum"></div>
+  <div class="qtext" id="qtext"></div>
+  <div class="opts" id="qopts"></div>
+  <div class="expl" id="qexpl"></div>
+  <div class="nav-row">
+    <button class="btn-main" id="btn-next" onclick="nextQ()" style="width:auto;padding:11px 28px;display:none">Siguiente →</button>
+  </div>
+</div>
+
+<!-- RESULTADO -->
+<div class="page" id="pg-result">
+  <div class="score-ring" id="ring">
+    <span class="val" id="r-val"></span>
+    <span class="lbl">/ 15</span>
+  </div>
+  <h2 id="r-title"></h2>
+  <p class="msg" id="r-msg"></p>
+  <div id="save-status"></div>
+  <button class="copy-btn" id="btn-copy" onclick="copyResult()">📋 Copiar resultado</button>
+  <div class="result-card" id="r-detail" style="margin-top:16px"></div>
+  <button class="btn-main" onclick="location.reload()" style="margin-top:14px">Volver al inicio</button>
+</div>
+
+<script>
+const PREGUNTAS = [
+  {
+    q: "¿Cuál es el rango de temperatura exigido para el transporte de medicamentos termosensibles en Grupo Afín?",
+    opts: ["0°C a 4°C","2°C a 8°C","4°C a 12°C","1°C a 6°C"],
+    a: 1,
+    e: "El rango es 2°C – 8°C (temperatura controlada de refrigeración), definido en el registro sanitario de cada producto y en la reglamentación del INVIMA."
+  },
+  {
+    q: "¿Qué temperatura deben tener los geles congelados ANTES de usarse en el embalaje?",
+    opts: ["Cualquier temperatura negativa sirve","-15°C a -18°C exactamente","-5°C a -10°C","-25°C o más frío es mejor"],
+    a: 1,
+    e: "El gel congelado debe estar entre -15°C y -18°C. Si está a -25°C (más frío de lo requerido), debe atemperarse hasta alcanzar ese rango antes de usarse."
+  },
+  {
+    q: "Un gel está a -25°C en el congelador. ¿Qué se debe hacer?",
+    opts: ["Usarlo directamente, más frío es más seguro","Descongelarlo completamente primero","Atemperarlo a temperatura ambiente hasta que llegue a -15 a -18°C","No se puede usar ese gel"],
+    a: 2,
+    e: "Si el gel está más frío de -18°C, debe atemperarse a temperatura ambiente HASTA que llegue al rango -15 a -18°C. Un gel demasiado frío puede congelar el producto (dañino)."
+  },
+  {
+    q: "¿Por qué Colombia siempre usa configuración de VERANO para los embalajes PCM?",
+    opts: ["Porque en verano se despachan más pedidos","Porque Colombia es país tropical sin estaciones climáticas","Porque la configuración de invierno está agotada","Por decisión del proveedor"],
+    a: 1,
+    e: "Colombia es un país tropical sin estaciones. Las temperaturas son representativas del verano global (28–35°C en ciudades cálidas). Por eso SIEMPRE se usa configuración de verano, sin importar el mes."
+  },
+  {
+    q: "¿Cuánto tiempo mínimo deben estar los packs PCM en el congelador (-18°C) antes de usarse?",
+    opts: ["12 horas","24 horas","48 horas","72 horas"],
+    a: 2,
+    e: "Los packs PCM deben estar en el congelador a -18°C por MÍNIMO 48 horas hasta estar completamente sólidos. Menos tiempo no garantiza la energía térmica necesaria."
+  },
+  {
+    q: "Después de sacar los packs PCM del congelador, ¿cuánto tiempo de atemperado se hace a 22±3°C (modelos MU50A y RU110A)?",
+    opts: ["5–10 minutos","15–20 minutos","30–35 minutos","60 minutos o más"],
+    a: 2,
+    e: "Los modelos CS-MU50A y CS-RU110A requieren 30–35 minutos de atemperado a 22±3°C. El modelo CS-VB01 requiere 30–40 minutos (5 min más)."
+  },
+  {
+    q: "¿Cuánto tiempo mínimo debe estar la caja/nevera pre-enfriada a 2–8°C antes del embalaje?",
+    opts: ["2 horas","6 horas","12 horas","24 horas"],
+    a: 2,
+    e: "La caja debe pre-enfriarse mínimo 12 horas a 2–8°C. Si se embala en una caja caliente, la temperatura inicial del producto nunca será correcta, como ocurrió en el Caso 3 y Caso 6."
+  },
+  {
+    q: "¿Qué le pasa a un medicamento biológico expuesto a 35°C durante 2 horas?",
+    opts: ["Nada, se recupera al volver al frío","Las proteínas se desnaturalizan irreversiblemente — el daño es permanente","Cambia de color pero sigue funcionando","Solo pierde 5% de eficacia"],
+    a: 1,
+    e: "La desnaturalización de proteínas a altas temperaturas es IRREVERSIBLE. El producto no se recupera al volver al frío. A 35°C, la tasa de degradación es varias veces mayor que a 8°C (regla de Arrhenius)."
+  },
+  {
+    q: "¿Qué significa la alerta ROJA en el Tive Tag al llegar al destino?",
+    opts: ["La batería está baja","La temperatura superó los límites durante el tránsito — excursión confirmada","El tag se dañó y hay que reemplazarlo","El envío llegó a tiempo"],
+    a: 1,
+    e: "Alerta ROJA = 'La etiqueta ha estado fuera de sus límites dados'. Significa excursión de temperatura confirmada. NO entregar sin autorización de Calidad. Reportar inmediatamente."
+  },
+  {
+    q: "¿Qué significa la alerta NARANJA 'etiqueta llena' en el Tive Tag?",
+    opts: ["El tag detectó temperatura muy alta","La batería se agotó","El tag llenó su memoria de 4.864 puntos antes de que terminara el tránsito — sin datos del final","El receptor apagó el tag antes de tiempo"],
+    a: 2,
+    e: "La alerta naranja = tag lleno. El Tive Tag tiene capacidad de 4.864 puntos. Si el intervalo de muestreo es muy corto para un tránsito largo, la memoria se agota y se pierden datos del final del envío."
+  },
+  {
+    q: "En el gráfico del Tive Tag se ve temperatura en rango durante el tránsito y luego un pico brusco a 35°C justo al final. ¿Qué ocurrió?",
+    opts: ["Excursión real de temperatura durante el tránsito","La nevera fue abierta al momento de la entrega y el tag no fue apagado — no es excursión real","El gel se agotó al final","El transportador metió la caja al sol"],
+    a: 1,
+    e: "Un pico al final del tránsito, con todo el recorrido en rango, indica apertura de la nevera en destino + tag no apagado. El pico es temperatura ambiente, no del producto. El receptor debe apagar el tag al recibir."
+  },
+  {
+    q: "¿Cuántas configuraciones de nevera maneja Grupo Afín actualmente?",
+    opts: ["2 (40 Lt y 14 Lt)","3 (40 Lt, 14 Lt, 40 Lt Urbana)","4 (40 Lt, 14 Lt, 40 Lt Urbana y Plástica 60 Lt)","5 configuraciones"],
+    a: 2,
+    e: "Grupo Afín maneja 4 configuraciones de icopor/plástico: Nevera 40 Lt, Nevera 14 Lt, Nevera 40 Lt Urbana, y Nevera Plástica 60 Lt."
+  },
+  {
+    q: "¿Qué pasa si un biológico se congela accidentalmente (temperatura por debajo de 2°C)?",
+    opts: ["Solo afecta la apariencia, sigue siendo efectivo","Se forman cristales de hielo que dañan irreversiblemente las proteínas","Se vuelve más potente","Se reconstituye solo al volver al frío"],
+    a: 1,
+    e: "La congelación causa formación de cristales de hielo que ROMPEN las estructuras proteicas. El daño es igual de grave que el calor. Algunos productos (ej. insulina, inmunoglobulinas) se destruyen irreversiblemente al congelarse."
+  },
+  {
+    q: "Si al cerrar el embalaje notas que la temperatura inicial es de 12°C, ¿qué debes hacer?",
+    opts: ["Despacharlo igual, el gel lo bajará en el camino","No despachar — reportar al jefe y rehacer el embalaje con acondicionamiento correcto","Agregar más gel y cerrar rápido","Esperar 30 minutos y luego cerrarlo"],
+    a: 1,
+    e: "Una temperatura inicial de 12°C indica que el embalaje no estaba bien pre-acondicionado. NUNCA despachar fuera de rango. Reportar, rehacer con caja y gel correctamente acondicionados."
+  },
+  {
+    q: "¿Dónde se ubica la sonda del Tive Tag y cuándo se activa?",
+    opts: ["En la tapa, se activa al llegar","Junto al producto en el centro, se activa justo antes de cerrar la caja","En el fondo bajo el gel, se activa al inicio del día","Fuera de la caja, se activa al despachar"],
+    a: 1,
+    e: "La sonda del Tive Tag va JUNTO AL PRODUCTO, en el centro de la carga. Se activa JUSTO ANTES de cerrar la caja. Así mide la temperatura real del medicamento durante todo el tránsito."
+  }
+];
+
+let nombre = '', cedula = '', cur = 0, respuestas = [], puntaje = 0;
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0, 0);
+}
+
+function validate() {
+  let ok = true;
+  const n = document.getElementById('inp-name').value.trim();
+  const c = document.getElementById('inp-cc').value.trim();
+  const en = document.getElementById('err-name');
+  const ec = document.getElementById('err-cc');
+  if (n.length < 3) {
+    document.getElementById('inp-name').classList.add('err');
+    en.classList.add('on'); ok = false;
+  } else { document.getElementById('inp-name').classList.remove('err'); en.classList.remove('on'); }
+  if (!/^\d{6,12}$/.test(c)) {
+    document.getElementById('inp-cc').classList.add('err');
+    ec.classList.add('on'); ok = false;
+  } else { document.getElementById('inp-cc').classList.remove('err'); ec.classList.remove('on'); }
+  return ok;
+}
+
+function startQuiz() {
+  if (!validate()) return;
+  nombre = document.getElementById('inp-name').value.trim();
+  cedula = document.getElementById('inp-cc').value.trim();
+  cur = 0; respuestas = []; puntaje = 0;
+  showPage('pg-quiz');
+  renderQ();
+}
+
+function renderQ() {
+  const q = PREGUNTAS[cur];
+  const pct = (cur / PREGUNTAS.length) * 100;
+  document.getElementById('qfill').style.width = pct + '%';
+  document.getElementById('qnum').textContent = 'Pregunta ' + (cur + 1) + ' de ' + PREGUNTAS.length;
+  document.getElementById('qtext').textContent = q.q;
+  document.getElementById('qexpl').className = 'expl';
+  document.getElementById('btn-next').style.display = 'none';
+  const oc = document.getElementById('qopts');
+  oc.innerHTML = q.opts.map((o, i) =>
+    `<button class="ob" onclick="pick(${i})">${String.fromCharCode(65+i)}. ${o}</button>`
+  ).join('');
+}
+
+function pick(i) {
+  const q = PREGUNTAS[cur];
+  respuestas.push(i);
+  if (i === q.a) puntaje++;
+  const btns = document.querySelectorAll('.ob');
+  btns.forEach((b, j) => {
+    b.disabled = true;
+    if (j === q.a) b.classList.add(i === q.a ? 'ok' : 'reveal');
+    else if (j === i) b.classList.add('ko');
+  });
+  const expl = document.getElementById('qexpl');
+  expl.textContent = (i === q.a ? '✅ Correcto. ' : '❌ Incorrecto. ') + q.e;
+  expl.className = 'expl on';
+  document.getElementById('btn-next').style.display = 'block';
+  document.getElementById('btn-next').textContent = cur < PREGUNTAS.length - 1 ? 'Siguiente →' : 'Ver resultados';
+}
+
+function nextQ() {
+  cur++;
+  if (cur >= PREGUNTAS.length) { showResult(); return; }
+  renderQ();
+}
+
+function showResult() {
+  showPage('pg-result');
+  const pct = Math.round(puntaje / PREGUNTAS.length * 100);
+  document.getElementById('r-val').textContent = puntaje;
+  const msgs = [
+    [0, 8, 'Necesita refuerzo', 'Repasa los módulos de temperatura, geles y proceso PCM antes de operar. Habla con tu jefe para agendar refuerzo.'],
+    [9, 11, '¡Buen avance!', 'Tienes una base sólida. Repasa los puntos que fallaste, especialmente los rangos del gel y el protocolo ante excursiones.'],
+    [12, 14, '¡Muy bien!', 'Dominas la mayor parte del proceso. Revisa los puntos fallados para llegar al 100%.'],
+    [15, 15, '¡Excelente! 🏆', '¡Puntaje perfecto! Demuestras dominio completo de la cadena de frío. ¡Sigue siendo ese ejemplo!']
+  ];
+  const m = msgs.find(([a, b]) => puntaje >= a && puntaje <= b);
+  document.getElementById('r-title').textContent = m[2];
+  document.getElementById('r-msg').textContent = m[3];
+  const ring = document.getElementById('ring');
+  ring.style.borderColor = pct >= 80 ? 'var(--green)' : pct >= 60 ? '#c27a10' : 'var(--red)';
+
+  let html = '<h4>Detalle de respuestas</h4>';
+  PREGUNTAS.forEach((q, i) => {
+    const ok = respuestas[i] === q.a;
+    html += `<div class="result-row"><span>${i+1}. ${q.q.slice(0,60)}…</span><span class="${ok?'tag-ok':'tag-ko'}">${ok?'✓':'✗'}</span></div>`;
+  });
+  document.getElementById('r-detail').innerHTML = html;
+
+  sendResults(pct);
+}
+
+async function sendResults(pct) {
+  const st = document.getElementById('save-status');
+  st.innerHTML = '<span class="spin"></span> Enviando resultados…';
+  const fecha = new Date().toLocaleString('es-CO', {timeZone:'America/Bogota'});
+  const detalle = PREGUNTAS.map((q,i) =>
+    `P${i+1}: ${respuestas[i]===q.a?'✓':'✗'} — ${q.q.slice(0,50)}...`
+  ).join('\n');
+
+  try {
+    const res = await fetch('https://formsubmit.co/ajax/andres.agudelo035@pascualbravo.edu.co', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({
+        _subject: `Quiz Cadena de Frío — ${nombre} — ${pct}%`,
+        Nombre: nombre,
+        Cedula: cedula,
+        Puntaje: `${puntaje}/15`,
+        Porcentaje: `${pct}%`,
+        Aprobado: pct >= 70 ? 'SÍ' : 'NO',
+        Fecha: fecha,
+        Detalle: detalle,
+        _captcha: 'false',
+        _template: 'table'
+      })
+    });
+    const data = await res.json();
+    if (data.success === 'true' || data.success === true) {
+      st.textContent = '✅ Resultado enviado al área de Calidad.';
+    } else {
+      st.textContent = '⚠️ No se pudo enviar. Toma una captura de tu puntaje.';
+    }
+  } catch(e) {
+    st.textContent = '⚠️ Sin conexión. Toma una captura de tu puntaje.';
+  }
+}
+
+function copyResult() {
+  const pct = Math.round(puntaje / PREGUNTAS.length * 100);
+  const txt = `Evaluación Cadena de Frío — Grupo Afín\nNombre: ${nombre}\nCC: ${cedula}\nPuntaje: ${puntaje}/15 (${pct}%)\nAprobado: ${pct>=70?'SÍ':'NO'}\nFecha: ${new Date().toLocaleString('es-CO',{timeZone:'America/Bogota'})}`;
+  try {
+    navigator.clipboard.writeText(txt).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = '✅ Copiado';
+      setTimeout(() => btn.textContent = '📋 Copiar resultado', 2000);
+    });
+  } catch(e) {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = 'No disponible en este navegador';
+  }
+}
+</script>
+</body>
+</html>
